@@ -4,7 +4,7 @@ import NavBar from "./components/NavBar.jsx";
 import "./styles/App.css";
 
 function App() {
-  const newBoard = ["", "", "", "", "", "", "", "", ""];
+  const newBoard = [" ", " ", " ", " ", " ", " ", " ", " ", " "];
   const [gameBoard, setGameBoard] = useState(newBoard);
 
   return (
