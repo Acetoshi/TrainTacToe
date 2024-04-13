@@ -1,8 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Dongle&display=swap");
+
 .gameboard {
-  
-  --gameboard-size : min(70vh,70vw);
-  width:var(--gameboard-size);
-  height:var(--gameboard-size);
+  --gameboard-size: min(70vh, 70vw);
+  width: var(--gameboard-size);
+  height: var(--gameboard-size);
 
   background-color: var(--nav-color);
   display: grid;
@@ -12,8 +13,26 @@
   border-radius: 16px;
 }
 
-.gameboard > button {
+.gameboard > li > button {
   width: 100%;
   height: 100%;
+
+  background-color: var(--light-background-color);
+
+  font-family: Dongle;
+  color: black;
+  font-size: calc(var(--gameboard-size) / 5);
+
+  transition-property: transform;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-out;
+  border-radius: 8px;
 }
 
+.gameboard > li > button:hover {
+  background-color: var(--light-background-color);
+}
+
+.gameboard > li > button.clickable:hover {
+  transform: scale(1.1);
+}

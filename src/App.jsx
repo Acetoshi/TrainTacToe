@@ -1,17 +1,18 @@
-import { useState } from 'react'
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import NavBar from './components/NavBar.jsx'
-import './styles/App.css'
+import NavBar from "./components/NavBar.jsx";
+import "./styles/App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const newBoard = ["", "", "", "", "", "", "", "", ""];
+  const [gameBoard, setGameBoard] = useState(newBoard);
 
   return (
     <>
       <NavBar />
-      <Outlet />
+      <Outlet context={[gameBoard, setGameBoard]} />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
