@@ -1,0 +1,19 @@
+.gameboard {
+  
+  --gameboard-size : min(70vh,70vw);
+  width:var(--gameboard-size);
+  height:var(--gameboard-size);
+
+  background-color: var(--nav-color);
+  display: grid;
+  grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.gameboard > button {
+  width: 100%;
+  height: 100%;
+}
+
