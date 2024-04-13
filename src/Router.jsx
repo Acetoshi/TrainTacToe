@@ -13,7 +13,11 @@ const router = createBrowserRouter([
      {
     path :'play',
     element:<h1>Play</h1>
-    }
+    },
+    {
+   path :'database',
+   element:<h1>Database</h1>
+   }
     ]
   }
 ]);
