@@ -4,7 +4,7 @@ import GameBoard from "./components/GameBoard.jsx";
 
 const router = createBrowserRouter([
   {
-    path: "/TrainTacToe/",
+    path: "/",
     element: <App />,
     children: [
       {
