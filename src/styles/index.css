@@ -1,12 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
 
-
 :root {
   --nav-color: black;
   --light-text-color: white;
   --light-background-color: #dedede;
-  --accent-color-light:#2C75FF;
-  --accent-color-strong:#3137FD;
+  --accent-color-light: #2c75ff;
+  --accent-color-strong: #3137fd;
   --title-font: "Inter", sans-serif;
 }
 
@@ -16,11 +15,8 @@ body {
   background-color: var(--light-background-color);
 }
 
-#root{
-    display:flex;
-    flex-direction: column;
-    align-items: center;
-
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-

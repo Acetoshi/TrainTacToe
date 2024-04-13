@@ -1,6 +1,7 @@
 import "../styles/GameBoard.css";
 import { useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
+import supabase from "../config/supabaseClient.jsx";
 
 function GameBoard() {
   const [gameBoard, setGameBoard] = useOutletContext();
@@ -9,9 +10,32 @@ function GameBoard() {
   //This state indicates if the game isn't finished (0) has been won(1), lost(2), or if it's a draw(3).
   const [gameState, setGameState] = useState(0);
 
+  // These states are linked to supabase
+  const [fetchError, setFetchError] = useState(null);
+  const [weights, setWeigths] = useState(null);
+
+  // Fetching data
+  useEffect(() => {
+    const fetchWeights = async () => {
+      const { data, error } = await supabase.from("knownMoves").select();
+
+      if (error) {
+        setFetchError(() => "Couldnt fetch");
+        setWeigths(() => null);
+        console.log(error);
+      }
+      if (data) {
+        setWeigths(() => data);
+        setFetchError(() => null);
+      }
+      console.log(data);
+    };
+    fetchWeights();
+  },[]);
+
   function handleClick(index) {
     // update the gameboard only if the square hasn't already been played.
-    if (humanIsNext && (gameBoard[index] === "")) {
+    if (humanIsNext && gameBoard[index] === "") {
       // put in memory the move that was made
       setGameBoard((prevGameBoard) => {
         const newGameBoard = [...prevGameBoard]; // Create a copy of the gameBoard array, otherwise the component didn't re-render, can't use splice here.
@@ -24,20 +48,17 @@ function GameBoard() {
 
   // this function is triggered everytime the component is re-rendered, we'll use it to call the database to fetch a responding move.
   useEffect(() => {
+    // Check wether or not it is the human's turn to play
     if (!humanIsNext) {
       // check if the game ended
       if (hasTheGameEnded(gameBoard) === 0) {
-        // fetch db to see if there is an avalaible response to the current situation 
+        // fetch db to see if there is an avalaible response to the current situation
 
         // if not, just make a random move, with a little timeout.
-        setTimeout(()=>makeRandomMove(gameBoard),1000);
-
+        setTimeout(() => makeRandomMove(gameBoard), 1000);
       } else {
-        // TODO find a way to make all buttons unclickable i.e put a space in the gameBoard state.
-        // TODO -> maybe make another use effect ? 
-
+        // nothing is
       }
-      ;
     }
   }, [gameBoard]);
 
@@ -47,7 +68,7 @@ function GameBoard() {
       newGameBoard[randomMove(gameBoard)] = "O";
       return newGameBoard;
     });
-    setHumanIsNext(() => !humanIsNext)
+    setHumanIsNext(() => !humanIsNext);
   }
 
   return (
@@ -66,6 +87,7 @@ function GameBoard() {
     </ul>
   );
 }
+
 export default GameBoard;
 
 function randomMove(gameBoard) {
@@ -104,7 +126,6 @@ function hasTheGameEnded(gameBoard) {
       playerMoves.includes(String(winConditions[i][2]))
     ) {
       // TODO apply 'winning-cell' to all win conditions that were met
-
       return 1;
     }
   }

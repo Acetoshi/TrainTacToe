@@ -8,7 +8,7 @@ function NavBar() {
         <h2>Train Tac Toe</h2>
         <ul>
           <li>
-            <NavLink to="/">Home</NavLink>
+            <NavLink to="">Home</NavLink>
           </li>
           <li>
             <NavLink to="play">Play</NavLink>
