@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import supabase from "../config/supabaseClient.jsx";
 
 function GameBoard() {
-  const [gameBoard, setGameBoard] = useOutletContext();
+  const [gameBoard, setGameBoard, history, setHistory] = useOutletContext();
+
   // This state indicates whether or not it is the human's turn to play
   const [humanIsNext, setHumanIsNext] = useState(true);
   //This state indicates if the game isn't finished (0) has been won(1), lost(2), or if it's a draw(3).
@@ -23,32 +24,33 @@ function GameBoard() {
         newGameBoard[index] = "X";
         return newGameBoard;
       });
+      addMoveToHistory(gameBoard, "Human", index);
       setHumanIsNext(() => !humanIsNext);
     }
   }
 
-  // this function is triggered everytime the component is re-rendered, we'll use it to call the database to fetch a responding move.
+  // Triggered everytime the component is re-rendered, we'll use it to call the database to fetch a responding move.
   useEffect(() => {
-    // this function is used to fecth data from the backend
-    const fetchWeights = async (id) => {
-      const { data, error } = await supabase
-        .from("knownMoves")
-        .select()
-        .eq("id", id);
-
-      if (error) {
-        setFetchError(() => "Couldnt fetch");
-        setWeigths(() => null);
-        console.log(error);
-      }
-      if (data) {
-        setWeigths(() => data);
-        setFetchError(() => null);
-      }
-    };
-
     // Check wether or not it is the human's turn to play
     if (!humanIsNext) {
+      // this function is used to fecth data from the backend
+      const fetchWeights = async (id) => {
+        const { data, error } = await supabase
+          .from("knownMoves")
+          .select()
+          .eq("id", id);
+
+        if (error) {
+          setFetchError(() => "Couldnt fetch");
+          setWeigths(() => null);
+          console.log(error);
+        }
+        if (data) {
+          setWeigths(() => data);
+          setFetchError(() => null);
+        }
+      };
+
       // fetch db to see if there is an avalaible response to the current situation
       fetchWeights(toId(gameBoard));
       // the rest is handled in the next hook
@@ -69,6 +71,75 @@ function GameBoard() {
     }
   }, [weights]);
 
+  // This hooks checks wether or not the game has ended, it is triggered everytime gameBoard changes
+  useEffect(() => {
+    const winConditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 6, 4],
+    ];
+    //First, convert all the moves of the player to a string, made of the indexes of where he/she has played
+    let playerMoves = getMoves(gameBoard, "X");
+    let playerWins = false;
+    // Same thing for the computer
+    let computerMoves = getMoves(gameBoard, "O");
+    let computerWins = false;
+
+    for (const winCondition of winConditions) {
+      // Check if player has met any win condition
+      if (
+        playerMoves.includes(String(winCondition[0])) &&
+        playerMoves.includes(String(winCondition[1])) &&
+        playerMoves.includes(String(winCondition[2]))
+      ) {
+        // TODO apply 'winning-cell' to all win conditions that were met
+        setGameState(() => 1);
+        addOutcomeToHistory(1);
+        playerWins = true;
+      }
+      // Check if the computer has met any win condition
+      if (
+        computerMoves.includes(String(winCondition[0])) &&
+        computerMoves.includes(String(winCondition[1])) &&
+        computerMoves.includes(String(winCondition[2]))
+      ) {
+        // TODO apply 'winning-cell' or give visual feedback
+        setGameState(() => 2);
+        addOutcomeToHistory(2);
+        computerWins = true;
+      }
+    }
+
+    // Check for a Draw, make sure nobody has won, or it would override previous result in the case the winning move was the last
+    if (!playerWins && !computerWins) {
+      let numberOfMoves = 0;
+      for (let i = 0; i < 9; i++) {
+        if (gameBoard[i] != " ") {
+          numberOfMoves += 1;
+        }
+      }
+      if (numberOfMoves >= 9) {
+        setGameState(() => 3);
+        addOutcomeToHistory(3);
+      }
+    }
+
+    // If no end game condition is met, the game continues, NO NEED TO CHANGE THE STATE
+  }, [gameBoard]);
+
+  // this hook triggers when the game has ended, it is used to analyse data and send adjusted weigths to the database
+  useEffect(() => {
+    if (gameState !== 0) {
+      console.log("launch data analysis");
+      console.log(history);
+    }
+  }, [gameState]);
+
   function toId(gameBoard) {
     let gameBoardCopy = [...gameBoard];
     let gameBoardMapped = gameBoardCopy.map((el) => {
@@ -84,7 +155,9 @@ function GameBoard() {
   function makeRandomMove(gameBoard) {
     setGameBoard((prevGameBoard) => {
       const newGameBoard = [...prevGameBoard];
-      newGameBoard[randomMove(gameBoard)] = "O";
+      let randomIndex = randomMove(gameBoard);
+      addMoveToHistory(prevGameBoard, "AI", randomIndex);
+      newGameBoard[randomIndex] = "O";
       return newGameBoard;
     });
     setHumanIsNext(() => !humanIsNext);
@@ -103,7 +176,6 @@ function GameBoard() {
     let randomNumber = Math.floor(Math.random() * sumOfWeigths);
 
     // then find the matching move to play
-    console.log(`somme : ${sumOfWeigths} et le random :${randomNumber}`);
     let nextMoveIndex = 0;
     let lowerBound = 0;
     let upperBound = 0;
@@ -118,63 +190,33 @@ function GameBoard() {
     }
     setGameBoard((prevGameBoard) => {
       const newGameBoard = [...prevGameBoard];
+      addMoveToHistory(prevGameBoard, "AI", nextMoveIndex);
       newGameBoard[nextMoveIndex] = "O";
       return newGameBoard;
     });
     setHumanIsNext(() => !humanIsNext);
   }
 
-  // This hooks checks wether or not the game has ended, it is triggered everytime gameBoard changes
-  useEffect(() => {
-    const winConditions = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 6, 4],
-    ];
-    //First, convert all the moves of the player to a string, made of the indexes of where he/she has played
-    let playerMoves = getMoves(gameBoard, "X");
-    // Same thing for the computer
-    let computerMoves = getMoves(gameBoard, "O");
+  function addMoveToHistory(gameBoard, player, moveIndex) {
+    setHistory((prevHistory) => {
+      // the object new history is shallow copied, and its key 'moves' that we'll update is also shallow copied, otherwise we get duplicates.
+      const newHistory = { ...prevHistory, moves: [...prevHistory.moves] };
+      newHistory.moves.push({
+        player: player,
+        gameBoard: gameBoard,
+        moveIndex: moveIndex,
+      });
+      return newHistory;
+    });
+  }
 
-    for (const winCondition of winConditions) {
-      // Check if player has met any win condition
-      if (
-        playerMoves.includes(String(winCondition[0])) &&
-        playerMoves.includes(String(winCondition[1])) &&
-        playerMoves.includes(String(winCondition[2]))
-      ) {
-        // TODO apply 'winning-cell' to all win conditions that were met
-        setGameState(() => 1);
-      }
-      // Check if the computer has met any win condition
-      if (
-        computerMoves.includes(String(winCondition[0])) &&
-        computerMoves.includes(String(winCondition[1])) &&
-        computerMoves.includes(String(winCondition[2]))
-      ) {
-        // TODO apply 'winning-cell' or give visual feedback
-        setGameState(() => 2);
-      }
-    }
-
-    // Check for a Draw
-    let numberOfMoves = 0;
-    for (let i = 0; i < 9; i++) {
-      if (gameBoard[i] != " ") {
-        numberOfMoves += 1;
-      }
-    }
-    if (numberOfMoves >= 9) {
-      setGameState(() => 3);
-    }
-
-    // If no end game condition is met, the game continues, NO NEED TO CHANGE THE STATE
-  }, [gameBoard]);
+  function addOutcomeToHistory(outcome) {
+    setHistory((prevHistory) => {
+      // the object new history is shallow copied, and its key 'moves' that we'll update is also shallow copied, otherwise we get duplicates.
+      const newHistory = { ...prevHistory, outcome: outcome };
+      return newHistory;
+    });
+  }
 
   function newGame() {
     const newBoard = [" ", " ", " ", " ", " ", " ", " ", " ", " "];
