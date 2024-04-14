@@ -61,6 +61,7 @@ function GameBoard() {
     }
   }, [gameBoard]);
 
+
   function toId(gameBoard) {
     let gameBoardCopy = [...gameBoard];
     let gameBoardMapped = gameBoardCopy.map((el) => {
@@ -70,7 +71,7 @@ function GameBoard() {
         return el;
       }
     });
-    return gameBoardMapped.join('');
+    return gameBoardMapped.join("");
   }
 
   function makeRandomMove(gameBoard) {
@@ -110,7 +111,7 @@ function GameBoard() {
         playerMoves.includes(String(winConditions[i][2]))
       ) {
         // TODO apply 'winning-cell' to all win conditions that were met
-        //setGameState(()=>1)
+        setGameState(() => 1);
         return 1;
       }
     }
@@ -125,7 +126,7 @@ function GameBoard() {
         computerMoves.includes(String(winConditions[i][2]))
       ) {
         // TODO apply 'winning-cell' to all win conditions that were met
-        //setGameState(()=>2)
+        setGameState(() => 2);
         return 2;
       }
     }
@@ -137,7 +138,7 @@ function GameBoard() {
       }
     }
     if (numberOfMoves >= 9) {
-      //setGameState(()=>3)
+      setGameState(() => 3);
       return 3;
     }
 
@@ -145,20 +146,30 @@ function GameBoard() {
     return 0;
   }
 
+  function newGame() {
+    console.log("newgame");
+    const newBoard = [" ", " ", " ", " ", " ", " ", " ", " ", " "];
+    setGameBoard(()=>newBoard)
+    setGameState(()=>0)
+  }
+
   return (
-    <ul className="gameboard">
-      {gameBoard.map((square, index) => (
-        <li key={index}>
-          {/* This class is used to make sure that the user gets a feeling for which square is clickable and which isn't */}
-          <button
-            className={humanIsNext && square == " " ? "clickable" : ""}
-            onClick={() => handleClick(index)}
-          >
-            {square}
-          </button>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="gameboard">
+        {gameBoard.map((square, index) => (
+          <li key={index}>
+            {/* This class is used to make sure that the user gets a feeling for which square is clickable and which isn't */}
+            <button
+              className={humanIsNext && square == " " ? "clickable" : ""}
+              onClick={() => handleClick(index)}
+            >
+              {square}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {gameState ? <button onClick={newGame}>Rematch</button> : null}
+    </>
   );
 }
 
