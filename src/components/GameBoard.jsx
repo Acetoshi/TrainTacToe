@@ -45,22 +45,43 @@ function GameBoard() {
         setWeigths(() => data);
         setFetchError(() => null);
       }
-      console.log(data);
     };
 
     // Check wether or not it is the human's turn to play
     if (!humanIsNext) {
       // check if the game ended
-      if (hasTheGameEnded(gameBoard) === 0) {
+      if (gameState === 0) {
         // fetch db to see if there is an avalaible response to the current situation
         fetchWeights(toId(gameBoard));
-
-        // if not, just make a random move, with a little timeout.
-        setTimeout(() => makeRandomMove(gameBoard), 1000);
+        // the rest is handled in the next hook
       }
     }
   }, [gameBoard]);
 
+  // This hook triggers when the weights are fetched
+  useEffect(() => {
+    if (!humanIsNext) {
+      
+
+      if (weights.length === 0) {
+        // if the situation isn't known to the database, just make a random move, with a little timeout.
+        setTimeout(() => makeRandomMove(gameBoard), 600);
+        console.log("random move")
+      } else {
+        // if the situation is know to the database, calculate 
+        console.log("here are your weigths for this move :", weights);
+        let i=3
+        console.log(weights[0][`w${i}`])
+
+        let sumOfWeigths =0;
+        for (let i=0;i<9;i++){
+          sumOfWeigths+=weights[0][`w${i}`]
+        }
+        console.log(sumOfWeigths)
+
+      }
+    }
+  }, [weights]);
 
   function toId(gameBoard) {
     let gameBoardCopy = [...gameBoard];
@@ -83,12 +104,8 @@ function GameBoard() {
     setHumanIsNext(() => !humanIsNext);
   }
 
-  //This function checks if the game isn't finished (0) has been won(1), lost(2), or if it's a draw(3).
-  function hasTheGameEnded(gameBoard) {
-    //  0 1 2
-    //  3 4 5
-    //  6 7 8
-
+  // This hooks checks wether or not the game has ended, it is triggered everytime gameBoard changes
+  useEffect(() => {
     const winConditions = [
       [0, 1, 2],
       [3, 4, 5],
@@ -99,37 +116,32 @@ function GameBoard() {
       [0, 4, 8],
       [2, 6, 4],
     ];
-
     //First, convert all the moves of the player to a string, made of the indexes of where he/she has played
     let playerMoves = getMoves(gameBoard, "X");
-
-    //Then check for every winning condition if he/she meets it.
-    for (let i = 0; i < 8; i++) {
-      if (
-        playerMoves.includes(String(winConditions[i][0])) &&
-        playerMoves.includes(String(winConditions[i][1])) &&
-        playerMoves.includes(String(winConditions[i][2]))
-      ) {
-        // TODO apply 'winning-cell' to all win conditions that were met
-        setGameState(() => 1);
-        return 1;
-      }
-    }
     // Same thing for the computer
     let computerMoves = getMoves(gameBoard, "O");
 
-    //Then check for every winning condition if he/she meets it.
-    for (let i = 0; i < 8; i++) {
+    for (const winCondition of winConditions) {
+      // Check if player has met any win condition
       if (
-        computerMoves.includes(String(winConditions[i][0])) &&
-        computerMoves.includes(String(winConditions[i][1])) &&
-        computerMoves.includes(String(winConditions[i][2]))
+        playerMoves.includes(String(winCondition[0])) &&
+        playerMoves.includes(String(winCondition[1])) &&
+        playerMoves.includes(String(winCondition[2]))
       ) {
         // TODO apply 'winning-cell' to all win conditions that were met
+        setGameState(() => 1);
+      }
+      // Check if the computer has met any win condition
+      if (
+        computerMoves.includes(String(winCondition[0])) &&
+        computerMoves.includes(String(winCondition[1])) &&
+        computerMoves.includes(String(winCondition[2]))
+      ) {
+        // TODO apply 'winning-cell' or give visual feedback
         setGameState(() => 2);
-        return 2;
       }
     }
+
     // Check for a Draw
     let numberOfMoves = 0;
     for (let i = 0; i < 9; i++) {
@@ -139,18 +151,15 @@ function GameBoard() {
     }
     if (numberOfMoves >= 9) {
       setGameState(() => 3);
-      return 3;
     }
 
     // If no end game condition is met, the game continues, NO NEED TO CHANGE THE STATE
-    return 0;
-  }
+  }, [gameBoard]);
 
   function newGame() {
-    console.log("newgame");
     const newBoard = [" ", " ", " ", " ", " ", " ", " ", " ", " "];
-    setGameBoard(()=>newBoard)
-    setGameState(()=>0)
+    setGameBoard(() => newBoard);
+    setGameState(() => 0);
   }
 
   return (
@@ -169,6 +178,7 @@ function GameBoard() {
         ))}
       </ul>
       {gameState ? <button onClick={newGame}>Rematch</button> : null}
+      <p>{gameState}</p>
     </>
   );
 }
