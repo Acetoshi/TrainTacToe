@@ -49,36 +49,22 @@ function GameBoard() {
 
     // Check wether or not it is the human's turn to play
     if (!humanIsNext) {
-      // check if the game ended
-      if (gameState === 0) {
-        // fetch db to see if there is an avalaible response to the current situation
-        fetchWeights(toId(gameBoard));
-        // the rest is handled in the next hook
-      }
+      // fetch db to see if there is an avalaible response to the current situation
+      fetchWeights(toId(gameBoard));
+      // the rest is handled in the next hook
     }
   }, [gameBoard]);
 
   // This hook triggers when the weights are fetched
   useEffect(() => {
-    if (!humanIsNext) {
-      
-
+    // make sure to make a move only when the game isn't finished (ie gameState is 0)
+    if (!humanIsNext && !gameState) {
       if (weights.length === 0) {
         // if the situation isn't known to the database, just make a random move, with a little timeout.
         setTimeout(() => makeRandomMove(gameBoard), 600);
-        console.log("random move")
       } else {
-        // if the situation is know to the database, calculate 
-        console.log("here are your weigths for this move :", weights);
-        let i=3
-        console.log(weights[0][`w${i}`])
-
-        let sumOfWeigths =0;
-        for (let i=0;i<9;i++){
-          sumOfWeigths+=weights[0][`w${i}`]
-        }
-        console.log(sumOfWeigths)
-
+        // else if there are weights, take them into account.
+        setTimeout(() => makeMoveBasedOnWeights(weights), 600);
       }
     }
   }, [weights]);
@@ -99,6 +85,40 @@ function GameBoard() {
     setGameBoard((prevGameBoard) => {
       const newGameBoard = [...prevGameBoard];
       newGameBoard[randomMove(gameBoard)] = "O";
+      return newGameBoard;
+    });
+    setHumanIsNext(() => !humanIsNext);
+  }
+
+  function makeMoveBasedOnWeights(weights) {
+    // if the situation is know to the database, sum all of the weigths
+    let sumOfWeigths = 0;
+    for (let i = 0; i < 9; i++) {
+      sumOfWeigths += weights[0][`w${i}`];
+    }
+
+    //TODO what happens if the sum is O ??
+
+    // then get a random number between 0 and the sum of all weights
+    let randomNumber = Math.floor(Math.random() * sumOfWeigths);
+
+    // then find the matching move to play
+    console.log(`somme : ${sumOfWeigths} et le random :${randomNumber}`);
+    let nextMoveIndex = 0;
+    let lowerBound = 0;
+    let upperBound = 0;
+
+    for (let i = 0; i < 9; i++) {
+      upperBound += weights[0][`w${nextMoveIndex}`];
+      if (lowerBound <= randomNumber && upperBound >= randomNumber) {
+        break;
+      }
+      lowerBound += weights[0][`w${nextMoveIndex}`];
+      nextMoveIndex++;
+    }
+    setGameBoard((prevGameBoard) => {
+      const newGameBoard = [...prevGameBoard];
+      newGameBoard[nextMoveIndex] = "O";
       return newGameBoard;
     });
     setHumanIsNext(() => !humanIsNext);
